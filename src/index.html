@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <meta name="format-detection" content="telephone=no">
+    <!-- iOS私有属性 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <!-- 启用360浏览器的极速模式(webkit) -->
+    <meta name="renderer" content="webkit">
+    <!-- 避免IE使用兼容模式 -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 针对手持设备优化，主要是针对一些老的不识别viewport的浏览器，比如黑莓 -->
+    <meta name="HandheldFriendly" content="true">
+    <!-- 微软的老式浏览器 -->
+    <meta name="MobileOptimized" content="320">
+    <!-- uc强制竖屏 -->
+    <meta name="screen-orientation" content="portrait">
+    <!-- QQ强制竖屏 -->
+    <meta name="x5-orientation" content="portrait">
+    <!-- UC强制全屏 -->
+    <meta name="full-screen" content="yes">
+    <!-- QQ强制全屏 -->
+    <meta name="x5-fullscreen" content="true">
+    <!-- UC应用模式 -->
+    <meta name="browsermode" content="application">
+    <!-- QQ应用模式 -->
+    <meta name="x5-page-mode" content="app">
+    <!-- windows phone 点击无高光 -->
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <title>enter your key</title>
+
+    <script src="http://code.jquery.com/jquery-1.11.3.js"></script>
+    <script>
+        var DemoFakeData = {
+            key: '1234'
+        };
+
+        var DemoConfig = {
+            fakedata: true,
+            fakedataDelay: 2000,
+            digitKeyLength: DemoFakeData.length || 4
+        };
+
+        var DemoModel = {
+        };
+
+        var DemoView = {
+            digitInputs: [],
+            curDigitInput: 0,
+            selectors: {
+                digitInputBox: '#inputBox_inputs',
+                digitInputs: '#inputBox_inputs input',
+                digitInputMask: '#inputBox_mask',
+                digitInputHints: '#inputBox_hint',
+                digitInputTitle: '#inputBox_title'
+            },
+            digitInputHints: {
+                checking: '正在验证...',
+                wrong: '验证码错误！请重新输入。',
+                pleaseInput: '请输入验证码。',
+                right: '通过验证！'
+            },
+            getDigitInputTitle: function () {
+                return '输入' + DemoConfig.digitKeyLength.toString() + '位口令';
+            },
+            init: function () {
+                DemoView.prepareDigitInputs(DemoConfig.digitKeyLength);
+                DemoView.bindEvents();
+            },
+            bindEvents: function () {
+                var $digitInputs = $(DemoView.selectors.digitInputs);
+                $digitInputs.keypress(function (event) {
+                    var code = (event.keyCode ? event.keyCode : event.which);
+                    var valid = false;
+                    if(code >= 48 && code <= 57) {
+                        valid = true;
+                        DemoView.inputDigitForward(event.target);
+                    } else if(code == 8) {
+                        valid = true;
+                    }
+                    return valid;
+                });
+                $digitInputs.keydown(function (event) {
+                    var code = (event.keyCode ? event.keyCode : event.which);
+                    //console.log('keydown: ' + code);
+                });
+                $digitInputs.keyup(function (event) {
+                    var code = (event.keyCode ? event.keyCode : event.which);
+                    //console.log('keyup: ' + code);
+                    if (code == 8 && event.target.value == '')
+                        DemoView.inputDigitBackward(event.target);
+                });
+                $digitInputs.on('paste', function (event) {
+                    return false;
+                });
+                $digitInputs.on('input propertychange', function (event) {
+                    var newCode = DemoView.getDigitKeyString();
+                    console.log('current key string: ' + newCode);
+                    if(newCode.length == DemoConfig.digitKeyLength) {
+                        DemoController.checkKey();
+                    }
+                });
+                $digitInputs.focus(function (event) {
+                    DemoView.curDigitInput = parseInt($(event.target).data('index'));
+                });
+
+                $(DemoView.selectors.digitInputMask).click(function (event) {
+                    event.preventDefault();
+                    DemoView.digitInputs[DemoView.curDigitInput].focus();
+                    event.stopPropagation();
+                });
+            },
+            getDigitKeyString: function () {
+                var keyStr = '';
+                for(var i in DemoView.digitInputs) {
+                    keyStr += DemoView.digitInputs[i].value;
+                }
+                return keyStr;
+            },
+            inputDigitForward: function (inputObj) {
+                DemoView.closeHint();
+
+                var curIndex = $(inputObj).data('index');
+                //console.log('current input: ' + curIndex);
+                if(curIndex >= DemoConfig.digitKeyLength - 1) return;
+                DemoView.digitInputs[curIndex + 1].focus();
+            },
+            inputDigitBackward: function (inputObj) {
+                var curIndex = $(inputObj).data('index');
+                //console.log('current input: ' + curIndex);
+                if(curIndex == 0) return;
+                DemoView.digitInputs[curIndex - 1].focus();
+            },
+            prepareDigitInputs: function (keyLength) {
+                $(DemoView.selectors.digitInputTitle).html(DemoView.getDigitInputTitle());
+                var $digitInputBox = $(DemoView.selectors.digitInputBox);
+                for (var i = 0; i < keyLength; i++) {
+                    var $input = $('<input' +
+                            ' data-index="' + i.toString() + '"' +
+                            ' type="tel"' +
+                            ' maxlength="1">');
+                    $digitInputBox.append($input);
+                    if(i != 0) {
+                        ($input)[0].blur();
+                    } else {
+                        ($input)[0].focus();
+                    }
+                    DemoView.digitInputs[i] = ($input)[0];
+                }
+            },
+            openHint: function (hintId) {
+                $(DemoView.selectors.digitInputHints + '>div').hide();
+                $(DemoView.selectors.digitInputHints + ' .' + hintId).show();
+            },
+            closeHint: function () {
+                $(DemoView.selectors.digitInputHints + '>div').hide();
+            }
+        };
+
+        var DemoController = {
+            init: function () {
+                DemoView.init();
+            },
+            checkKey: function () {
+                DemoView.openHint('checking');
+                var curKey = DemoView.getDigitKeyString();
+                setTimeout(function () {
+                    if(curKey == DemoFakeData.key) {
+                        DemoView.openHint('right');
+                    } else {
+                        DemoView.openHint('wrong');
+                    }
+                }, DemoConfig.fakedataDelay);
+            }
+        };
+
+        window.onload = function () {
+            DemoController.init();
+        };
+    </script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            padding: 0;
+            border: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="inputBox_wrapper">
+    <div id="inputBox_title"></div>
+    <div id="inputBox_inputs" style="position: relative;">
+        <div id="inputBox_mask" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: 10;
+                    "></div>
+    </div>
+    <div id="inputBox_hint">
+        <div class="checking">正在验证...</div>
+        <div class="wrong">验证码错误！请重新输入。</div>
+        <div class="pleaseInput">请输入验证码。</div>
+        <div class="right">通过验证！</div>
+    </div>
+</div>
+
+</body>
+</html>
