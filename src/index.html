@@ -81,30 +81,33 @@
                     } else if(code == 8) {
                         valid = true;
                     }
+                    DemoView.log('keypress: ' + code);
                     return valid;
                 });
                 $digitInputs.keydown(function (event) {
                     var code = (event.keyCode ? event.keyCode : event.which);
-                    //console.log('keydown: ' + code);
+                    DemoView.log('keydown: ' + code);
                 });
                 $digitInputs.keyup(function (event) {
                     var code = (event.keyCode ? event.keyCode : event.which);
-                    //console.log('keyup: ' + code);
                     if (code == 8 && event.target.value == '')
                         DemoView.inputDigitBackward(event.target);
+                    DemoView.log('keyup: ' + code);
                 });
                 $digitInputs.on('paste', function (event) {
+                    DemoView.log('paste forbidden');
                     return false;
                 });
                 $digitInputs.on('input propertychange', function (event) {
                     var newCode = DemoView.getDigitKeyString();
-                    console.log('current key string: ' + newCode);
+                    DemoView.log('current key: ' + newCode);
                     if(newCode.length == DemoConfig.digitKeyLength) {
                         DemoController.checkKey();
                     }
                 });
                 $digitInputs.focus(function (event) {
                     DemoView.curDigitInput = parseInt($(event.target).data('index'));
+                    DemoView.log('focus on: ' + DemoView.curDigitInput);
                 });
 
                 $(DemoView.selectors.digitInputMask).click(function (event) {
@@ -133,8 +136,10 @@
                 //console.log('current input: ' + curIndex);
                 if(curIndex == 0) return;
                 DemoView.digitInputs[curIndex - 1].focus();
+                DemoView.closeHint();
             },
             prepareDigitInputs: function (keyLength) {
+                DemoView.closeHint();
                 $(DemoView.selectors.digitInputTitle).html(DemoView.getDigitInputTitle());
                 var $digitInputBox = $(DemoView.selectors.digitInputBox);
                 for (var i = 0; i < keyLength; i++) {
@@ -157,6 +162,12 @@
             },
             closeHint: function () {
                 $(DemoView.selectors.digitInputHints + '>div').hide();
+            },
+            loggable: true,
+            log: function (text) {
+                if(DemoView.loggable === true) {
+                    $('#pageLogger').append('<div>' + text + '</div>');
+                }
             }
         };
 
@@ -213,6 +224,11 @@
         <div class="right">通过验证！</div>
     </div>
 </div>
+
+<div id="pageLogger" style="position: fixed; z-index: 100; bottom: 0; left: 0;
+    width: 100%; height: 512px; overflow: auto;
+    color: green; background-color: #000; opacity: 0.6;
+    font-size: 12px; line-height: 12px;"></div>
 
 </body>
 </html>
