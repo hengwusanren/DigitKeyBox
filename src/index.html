@@ -44,13 +44,13 @@
         };
 
         var DemoFakeData = {
-            key: '1234'
+            key: '123456789'
         };
 
         var DemoConfig = {
             fakedata: true,
             fakedataDelay: 2000,
-            digitKeyLength: DemoFakeData.length || 4
+            digitKeyLength: DemoFakeData.key.length || 4
         };
 
         var DemoModel = {};
@@ -76,6 +76,7 @@
                 return 'Enter ' + DemoConfig.digitKeyLength.toString() + '-digit key:';
             },
             init: function () {
+                DemoView.log('Hi, the key is ' + DemoFakeData.key + '.', true);
                 DemoView.prepareDigitInputs(DemoConfig.digitKeyLength);
                 DemoView.bindEvents();
             },
@@ -85,13 +86,22 @@
 
                     addEvent(target, 'keypress', function (event) {
                         var code = (event.keyCode ? event.keyCode : event.which);
+
                         var valid = ((code >= 48 && code <= 57) || code == 8);
+
                         DemoView.inputState = (code != 8);
                         DemoView.log('keypress: ' + code);
                         return valid;
                     }, false);
                     addEvent(target, 'keydown', function (event) {
                         var code = (event.keyCode ? event.keyCode : event.which);
+
+                        var valid = ((code >= 48 && code <= 57) || code == 8);
+                        if(!valid) {
+                            event.preventDefault();
+                            return false;
+                        }
+
                         DemoView.inputState = (code != 8);
                         if(event,target.value == '' && DemoView.inputState === false) {
                             var curInputIndex = DemoView.curDigitInput;
@@ -107,7 +117,7 @@
                         return false;
                     }, false);
                     addEvent(target, 'focus', function (event) {
-                        DemoView.log('focus on: ' + $(event.target).data('index'));
+                        DemoView.log('focus on: ' + $(event.target).data('index'), true);
                     }, false);
 
                     // text changes:
@@ -123,7 +133,7 @@
 
                 var inputMask = $(DemoView.selectors.digitInputMask)[0];
                 addEvent(inputMask, 'click', DemoView.inputMaskClickHandler, false);
-                addEvent(inputMask, 'touchstart', DemoView.inputMaskClickHandler, false);
+                //addEvent(inputMask, 'touchstart', DemoView.inputMaskClickHandler, false);
             },
             inputTextChangeHandler: function (event) {
                 var curKey = DemoView.getDigitKeyString();
@@ -136,19 +146,34 @@
                 }
                 DemoView.log('curInputState: ' + DemoView.inputState.toString());
                 DemoView.log('curInputIndex: ' + curInputIndex.toString());
+
+                if(curInputIndex > 0) DemoView.digitInputs[curInputIndex - 1].blur();
+                if(curInputIndex < DemoConfig.digitKeyLength - 1) DemoView.digitInputs[curInputIndex + 1].blur();
                 DemoView.digitInputs[curInputIndex].focus();
+
                 DemoView.curDigitInput = curInputIndex;
                 if (curKey.length >= DemoConfig.digitKeyLength) {
-                    DemoView.log('current key: ' + curKey);
+                    DemoView.log('current key: ' + curKey, true);
                     DemoView.checkKey();
                     return;
                 }
 
                 DemoView.closeHint();
+
+                $(DemoView.selectors.digitInputTitle).click();
+                $(DemoView.selectors.digitInputMask).click();
+
+
+                setTimeout(function () {
+                    DemoView.digitInputs[DemoView.curDigitInput].focus();
+                    DemoView.digitInputs[DemoView.curDigitInput].click();
+                }, 100);
+
             },
             inputMaskClickHandler: function (event) {
                 event.preventDefault();
                 DemoView.digitInputs[DemoView.curDigitInput].focus();
+                DemoView.digitInputs[DemoView.curDigitInput].click();
                 event.stopPropagation();
             },
             getDigitKeyString: function () {
@@ -188,9 +213,14 @@
             closeHint: function () {
                 $(DemoView.selectors.digitInputHints + '>div').hide();
             },
-            loggable: true,
-            log: function (text) {
-                if (DemoView.loggable === true) {
+            loggable: false,
+            log: function (text, force) {
+                if($('#pageLogger')[0].style.display == 'none') {
+                    console.log(text);
+                    return;
+                }
+                force |= DemoView.loggable;
+                if (force) {
                     $('#pageLogger').append('<div>' + text + '</div>');
                     $('#pageLogger')[0].scrollTop = $('#pageLogger')[0].scrollHeight;
                 }
@@ -234,6 +264,29 @@
             padding: 32px 16px;
         }
 
+        #inputBox_title {
+            font-size: 32px;
+            line-height: 64px;
+        }
+
+        #inputBox_hint {
+            font-size: 16px;
+            line-height: 32px;
+        }
+
+        #inputBox_inputs {
+            position: relative;
+        }
+
+        #inputBox_mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
         #inputBox_inputs input {
             font-size: 20px;
             width: 32px;
@@ -247,6 +300,12 @@
             padding: 0;
             margin: 0;
             outline: none;
+
+            /*-webkit-user-select:none;*/
+            /*-moz-user-select: none;*/
+            /*-khtml-user-select: none;*/
+            /*-ms-user-select:none;*/
+            /*user-select: none;*/
         }
 
         #inputBox_inputs input:first-of-type {
@@ -258,21 +317,30 @@
             border-right: 2px solid #ddd;
             border-radius: 0 8px 8px 0;
         }
+
+        #pageLogger {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 256px;
+            overflow: auto;
+            color: #fff;
+            background-color: #000;
+            opacity: 0.6;
+            font-size: 12px;
+            line-height: 12px;
+        }
     </style>
 </head>
 <body>
 
 <div id="inputBox_wrapper">
     <div id="inputBox_title"></div>
-    <div id="inputBox_inputs" style="position: relative;">
-        <div id="inputBox_mask" style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        z-index: 10;
-                    "></div>
+    <div id="inputBox_inputs">
+        <div id="inputBox_mask"></div>
     </div>
     <div id="inputBox_hint">
         <div class="checking">Checking...</div>
@@ -282,10 +350,7 @@
     </div>
 </div>
 
-<div id="pageLogger" style="position: fixed; z-index: 100; bottom: 0; left: 0;
-    width: 100%; height: 256px; overflow: auto;
-    color: green; background-color: #000; opacity: 0.6;
-    font-size: 12px; line-height: 12px;"></div>
+<div id="pageLogger" style=""></div>
 
 </body>
 </html>
