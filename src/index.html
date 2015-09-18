@@ -34,6 +34,15 @@
 
     <script src="http://code.jquery.com/jquery-1.11.3.js"></script>
     <script>
+
+        var addEvent = function (target, type, handler, useCapture) {
+            if("\v" == "v") { // IE
+                target.attachEvent('on' + type, handler);
+            } else {
+                target.addEventListener(type, handler, !!useCapture);
+            }
+        };
+
         var DemoFakeData = {
             key: '1234'
         };
@@ -49,6 +58,7 @@
         var DemoView = {
             digitInputs: [],
             curDigitInput: 0,
+            inputState: true, // true: longer, false: shorter
             selectors: {
                 digitInputBox: '#inputBox_inputs',
                 digitInputs: '#inputBox_inputs input',
@@ -70,45 +80,76 @@
                 DemoView.bindEvents();
             },
             bindEvents: function () {
-                var $digitInputs = $(DemoView.selectors.digitInputs);
-                $digitInputs.keypress(function (event) {
-                    var code = (event.keyCode ? event.keyCode : event.which);
-                    var valid = ((code >= 48 && code <= 57) || code == 8);
+                for(var inputIndex in DemoView.digitInputs) {
+                    var target = DemoView.digitInputs[inputIndex];
 
-                    DemoView.log('keypress: ' + code);
-                    return valid;
-                });
-                $digitInputs.keydown(function (event) {
-                    var code = (event.keyCode ? event.keyCode : event.which);
+                    addEvent(target, 'keypress', function (event) {
+                        var code = (event.keyCode ? event.keyCode : event.which);
+                        var valid = ((code >= 48 && code <= 57) || code == 8);
+                        DemoView.inputState = (code != 8);
+                        DemoView.log('keypress: ' + code);
+                        return valid;
+                    }, false);
+                    addEvent(target, 'keydown', function (event) {
+                        var code = (event.keyCode ? event.keyCode : event.which);
+                        DemoView.inputState = (code != 8);
+                        if(event,target.value == '' && DemoView.inputState === false) {
+                            var curInputIndex = DemoView.curDigitInput;
+                            if(curInputIndex > 0) curInputIndex--;
+                            DemoView.digitInputs[curInputIndex].focus();
+                        }
+                    }, false);
+                    addEvent(target, 'keyup', function (event) {
+                        var code = (event.keyCode ? event.keyCode : event.which);
+                        DemoView.inputState = (code != 8);
+                    }, false);
+                    addEvent(target, 'paste', function (event) {
+                        return false;
+                    }, false);
+                    addEvent(target, 'focus', function (event) {
+                        DemoView.log('focus on: ' + $(event.target).data('index'));
+                    }, false);
 
-                    DemoView.log('keydown: ' + code);
-                });
-                $digitInputs.keyup(function (event) {
-                    var code = (event.keyCode ? event.keyCode : event.which);
-                    if (code >= 48 && code <= 57)
-                        DemoView.inputDigitForward(event.target);
-                    else if (code == 8 && event.target.value == '')
-                        DemoView.inputDigitBackward(event.target);
+                    // text changes:
+                    addEvent(target, 'change', function (event) {
+                        DemoView.log('onchange');
+                    }, false);
+                    if("\v" == "v") { // IE
+                        target.onpropertychange = DemoView.inputTextChangeHandler;
+                    } else {
+                        target.addEventListener('input', DemoView.inputTextChangeHandler, false);
+                    }
+                }
 
-                    DemoView.log('keyup: ' + code);
-                });
-                $digitInputs.on('paste', function (event) {
-                    DemoView.log('paste forbidden');
-                    return false;
-                });
-                $digitInputs.on('input propertychange', function (event) {
-                    //todo
-                });
-                $digitInputs.focus(function (event) {
-                    DemoView.curDigitInput = parseInt($(event.target).data('index'));
-                    DemoView.log('focus on: ' + DemoView.curDigitInput);
-                });
+                var inputMask = $(DemoView.selectors.digitInputMask)[0];
+                addEvent(inputMask, 'click', DemoView.inputMaskClickHandler, false);
+                addEvent(inputMask, 'touchstart', DemoView.inputMaskClickHandler, false);
+            },
+            inputTextChangeHandler: function (event) {
+                var curKey = DemoView.getDigitKeyString();
+                var curInputIndex = curKey.length;
+                if(DemoView.inputState === true) {
+                    if(curInputIndex >= DemoConfig.digitKeyLength)
+                        curInputIndex = DemoConfig.digitKeyLength - 1;
+                } else {
+                    //if(curInputIndex > 0) curInputIndex--;
+                }
+                DemoView.log('curInputState: ' + DemoView.inputState.toString());
+                DemoView.log('curInputIndex: ' + curInputIndex.toString());
+                DemoView.digitInputs[curInputIndex].focus();
+                DemoView.curDigitInput = curInputIndex;
+                if (curKey.length >= DemoConfig.digitKeyLength) {
+                    DemoView.log('current key: ' + curKey);
+                    DemoView.checkKey();
+                    return;
+                }
 
-                $(DemoView.selectors.digitInputMask).click(function (event) {
-                    event.preventDefault();
-                    DemoView.digitInputs[DemoView.curDigitInput].focus();
-                    event.stopPropagation();
-                });
+                DemoView.closeHint();
+            },
+            inputMaskClickHandler: function (event) {
+                event.preventDefault();
+                DemoView.digitInputs[DemoView.curDigitInput].focus();
+                event.stopPropagation();
             },
             getDigitKeyString: function () {
                 var keyStr = '';
@@ -117,30 +158,10 @@
                 }
                 return keyStr;
             },
-            checkKey: function () {
-                var curKey = DemoView.getDigitKeyString();
-                DemoView.log('current key: ' + curKey);
-                if (curKey.length == DemoConfig.digitKeyLength) {
-                    DemoView.openHint('checking');
-                    DemoController.checkKey(curKey);
-                }
-            },
-            inputDigitForward: function (inputObj) {
-                var curKeyLen = DemoView.getDigitKeyString().length;
-                if (curKeyLen >= DemoConfig.digitKeyLength) {
-                    DemoView.checkKey();
-                    return;
-                }
-                DemoView.digitInputs[curKeyLen].focus();
-
-                DemoView.closeHint();
-            },
-            inputDigitBackward: function (inputObj) {
-                var curIndex = $(inputObj).data('index');
-                if (curIndex == 0) return;
-                DemoView.digitInputs[curIndex - 1].focus();
-
-                DemoView.closeHint();
+            checkKey: function (curKey) {
+                if(arguments.length == 0) curKey = DemoView.getDigitKeyString();
+                DemoView.openHint('checking');
+                DemoController.checkKey(curKey);
             },
             prepareDigitInputs: function (keyLength) {
                 DemoView.closeHint();
@@ -171,6 +192,7 @@
             log: function (text) {
                 if (DemoView.loggable === true) {
                     $('#pageLogger').append('<div>' + text + '</div>');
+                    $('#pageLogger')[0].scrollTop = $('#pageLogger')[0].scrollHeight;
                 }
             }
         };
@@ -213,6 +235,7 @@
         }
 
         #inputBox_inputs input {
+            font-size: 20px;
             width: 32px;
             height: 32px;
             line-height: 32px;
