@@ -58,13 +58,13 @@
                 digitInputTitle: '#inputBox_title'
             },
             digitInputHints: {
-                checking: '正在验证...',
-                wrong: '验证码错误！请重新输入。',
-                pleaseInput: '请输入验证码。',
-                right: '通过验证！'
+                checking: 'Checking',
+                wrong: 'Wrong key. Please try again.',
+                pleaseInput: 'Please enter your key.',
+                right: 'Accepted!'
             },
             getDigitInputTitle: function () {
-                return '输入' + DemoConfig.digitKeyLength.toString() + '位口令';
+                return 'Enter ' + DemoConfig.digitKeyLength.toString() + '-digit key:';
             },
             init: function () {
                 DemoView.prepareDigitInputs(DemoConfig.digitKeyLength);
@@ -98,11 +98,7 @@
                     return false;
                 });
                 $digitInputs.on('input propertychange', function (event) {
-                    var newCode = DemoView.getDigitKeyString();
-                    DemoView.log('current key: ' + newCode);
-                    if(newCode.length == DemoConfig.digitKeyLength) {
-                        DemoController.checkKey();
-                    }
+                    //todo
                 });
                 $digitInputs.focus(function (event) {
                     DemoView.curDigitInput = parseInt($(event.target).data('index'));
@@ -122,15 +118,20 @@
                 }
                 return keyStr;
             },
+			checkKey: function () {
+				var curKey = DemoView.getDigitKeyString();
+				DemoView.log('current key: ' + curKey);
+				if(curKey.length == DemoConfig.digitKeyLength) {
+					DemoView.openHint('checking');
+					DemoController.checkKey(curKey);
+				}
+			},
             inputDigitForward: function (inputObj) {
-                /*
-                var curIndex = $(inputObj).data('index');
-                if(curIndex >= DemoConfig.digitKeyLength - 1) return;
-                DemoView.digitInputs[curIndex + 1].focus();
-                */
-
                 var curKeyLen = DemoView.getDigitKeyString().length;
-                if(curKeyLen == DemoConfig.digitKeyLength) return;
+                if(curKeyLen >= DemoConfig.digitKeyLength) {
+					DemoView.checkKey();
+					return;
+				}
                 DemoView.digitInputs[curKeyLen].focus();
 
                 DemoView.closeHint();
@@ -179,9 +180,8 @@
             init: function () {
                 DemoView.init();
             },
-            checkKey: function () {
-                DemoView.openHint('checking');
-                var curKey = DemoView.getDigitKeyString();
+            checkKey: function (curKey) {
+				if(!curKey) curKey = DemoView.getDigitKeyString();
                 setTimeout(function () {
                     if(curKey == DemoFakeData.key) {
                         DemoView.openHint('right');
@@ -204,7 +204,34 @@
             padding: 0;
             border: 0;
             margin: 0;
+			font: 12px/1.5 tahoma, arial, \5b8b\4f53;
         }
+		#inputBox_wrapper {			
+			text-align: center;
+			margin: 32px 0;
+			padding: 0 16px;
+		}
+		#inputBox_inputs input {
+		    width: 32px;
+			height: 32px;
+			line-height: 32px;
+			text-align: center;
+			border-top: 2px solid #ddd;
+			border-right: 1px solid #ddd;
+			border-bottom: 2px solid #ddd;
+			border-left: 1px solid #ddd;
+			padding: 0;
+			margin: 0;
+			outline: none;
+		}
+		#inputBox_inputs input:first-of-type {
+			border-left: 1px solid #ddd;
+			border-radius: 8px 0 0 8px;
+		}
+		#inputBox_inputs input:last-of-type {
+			border-right: 1px solid #ddd;
+			border-radius: 0 8px 8px 0;
+		}
     </style>
 </head>
 <body>
@@ -222,10 +249,10 @@
                     "></div>
     </div>
     <div id="inputBox_hint">
-        <div class="checking">正在验证...</div>
-        <div class="wrong">验证码错误！请重新输入。</div>
-        <div class="pleaseInput">请输入验证码。</div>
-        <div class="right">通过验证！</div>
+        <div class="checking">Checking...</div>
+        <div class="wrong">Wrong key. Please try again.</div>
+        <div class="pleaseInput">Please enter your key.</div>
+        <div class="right">Accepted!</div>
     </div>
 </div>
 
