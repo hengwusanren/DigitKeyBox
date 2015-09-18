@@ -44,8 +44,7 @@
             digitKeyLength: DemoFakeData.length || 4
         };
 
-        var DemoModel = {
-        };
+        var DemoModel = {};
 
         var DemoView = {
             digitInputs: [],
@@ -86,7 +85,7 @@
                 });
                 $digitInputs.keyup(function (event) {
                     var code = (event.keyCode ? event.keyCode : event.which);
-                    if(code >= 48 && code <= 57)
+                    if (code >= 48 && code <= 57)
                         DemoView.inputDigitForward(event.target);
                     else if (code == 8 && event.target.value == '')
                         DemoView.inputDigitBackward(event.target);
@@ -113,32 +112,32 @@
             },
             getDigitKeyString: function () {
                 var keyStr = '';
-                for(var i in DemoView.digitInputs) {
+                for (var i in DemoView.digitInputs) {
                     keyStr += DemoView.digitInputs[i].value;
                 }
                 return keyStr;
             },
-			checkKey: function () {
-				var curKey = DemoView.getDigitKeyString();
-				DemoView.log('current key: ' + curKey);
-				if(curKey.length == DemoConfig.digitKeyLength) {
-					DemoView.openHint('checking');
-					DemoController.checkKey(curKey);
-				}
-			},
+            checkKey: function () {
+                var curKey = DemoView.getDigitKeyString();
+                DemoView.log('current key: ' + curKey);
+                if (curKey.length == DemoConfig.digitKeyLength) {
+                    DemoView.openHint('checking');
+                    DemoController.checkKey(curKey);
+                }
+            },
             inputDigitForward: function (inputObj) {
                 var curKeyLen = DemoView.getDigitKeyString().length;
-                if(curKeyLen >= DemoConfig.digitKeyLength) {
-					DemoView.checkKey();
-					return;
-				}
+                if (curKeyLen >= DemoConfig.digitKeyLength) {
+                    DemoView.checkKey();
+                    return;
+                }
                 DemoView.digitInputs[curKeyLen].focus();
 
                 DemoView.closeHint();
             },
             inputDigitBackward: function (inputObj) {
                 var curIndex = $(inputObj).data('index');
-                if(curIndex == 0) return;
+                if (curIndex == 0) return;
                 DemoView.digitInputs[curIndex - 1].focus();
 
                 DemoView.closeHint();
@@ -153,7 +152,7 @@
                             ' type="tel"' +
                             ' maxlength="1">');
                     $digitInputBox.append($input);
-                    if(i != 0) {
+                    if (i != 0) {
                         ($input)[0].blur();
                     } else {
                         ($input)[0].focus();
@@ -170,7 +169,7 @@
             },
             loggable: true,
             log: function (text) {
-                if(DemoView.loggable === true) {
+                if (DemoView.loggable === true) {
                     $('#pageLogger').append('<div>' + text + '</div>');
                 }
             }
@@ -181,9 +180,9 @@
                 DemoView.init();
             },
             checkKey: function (curKey) {
-				if(!curKey) curKey = DemoView.getDigitKeyString();
+                if (!curKey) curKey = DemoView.getDigitKeyString();
                 setTimeout(function () {
-                    if(curKey == DemoFakeData.key) {
+                    if (curKey == DemoFakeData.key) {
                         DemoView.openHint('right');
                     } else {
                         DemoView.openHint('wrong');
@@ -200,37 +199,42 @@
         html, body {
             height: 100%;
         }
+
         body {
             padding: 0;
             border: 0;
             margin: 0;
-			font: 12px/1.5 tahoma, arial, \5b8b\4f53;
+            font: 12px/1.5 tahoma, arial, \5b8b\4f53;
         }
-		#inputBox_wrapper {			
-			text-align: center;
-			padding: 32px 16px;
-		}
-		#inputBox_inputs input {
-		    width: 32px;
-			height: 32px;
-			line-height: 32px;
-			text-align: center;
-			border-top: 2px solid #ddd;
-			border-right: 1px solid #ddd;
-			border-bottom: 2px solid #ddd;
-			border-left: 1px solid #ddd;
-			padding: 0;
-			margin: 0;
-			outline: none;
-		}
-		#inputBox_inputs input:first-of-type {
-			border-left: 2px solid #ddd;
-			border-radius: 8px 0 0 8px;
-		}
-		#inputBox_inputs input:last-of-type {
-			border-right: 2px solid #ddd;
-			border-radius: 0 8px 8px 0;
-		}
+
+        #inputBox_wrapper {
+            text-align: center;
+            padding: 32px 16px;
+        }
+
+        #inputBox_inputs input {
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            border-top: 2px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-bottom: 2px solid #ddd;
+            border-left: 1px solid #ddd;
+            padding: 0;
+            margin: 0;
+            outline: none;
+        }
+
+        #inputBox_inputs input:first-of-type {
+            border-left: 2px solid #ddd;
+            border-radius: 8px 0 0 8px;
+        }
+
+        #inputBox_inputs input:last-of-type {
+            border-right: 2px solid #ddd;
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 </head>
 <body>
