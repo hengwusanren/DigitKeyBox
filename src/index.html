@@ -74,24 +74,23 @@
                 var $digitInputs = $(DemoView.selectors.digitInputs);
                 $digitInputs.keypress(function (event) {
                     var code = (event.keyCode ? event.keyCode : event.which);
-                    var valid = false;
-                    if(code >= 48 && code <= 57) {
-                        valid = true;
-                        DemoView.inputDigitForward(event.target);
-                    } else if(code == 8) {
-                        valid = true;
-                    }
+                    var valid = ((code >= 48 && code <= 57) || code == 8);
+
                     DemoView.log('keypress: ' + code);
                     return valid;
                 });
                 $digitInputs.keydown(function (event) {
                     var code = (event.keyCode ? event.keyCode : event.which);
+
                     DemoView.log('keydown: ' + code);
                 });
                 $digitInputs.keyup(function (event) {
                     var code = (event.keyCode ? event.keyCode : event.which);
-                    if (code == 8 && event.target.value == '')
+                    if(code >= 48 && code <= 57)
+                        DemoView.inputDigitForward(event.target);
+                    else if (code == 8 && event.target.value == '')
                         DemoView.inputDigitBackward(event.target);
+
                     DemoView.log('keyup: ' + code);
                 });
                 $digitInputs.on('paste', function (event) {
@@ -124,18 +123,23 @@
                 return keyStr;
             },
             inputDigitForward: function (inputObj) {
-                DemoView.closeHint();
-
+                /*
                 var curIndex = $(inputObj).data('index');
-                //console.log('current input: ' + curIndex);
                 if(curIndex >= DemoConfig.digitKeyLength - 1) return;
                 DemoView.digitInputs[curIndex + 1].focus();
+                */
+
+                var curKeyLen = DemoView.getDigitKeyString().length;
+                if(curKeyLen == DemoConfig.digitKeyLength) return;
+                DemoView.digitInputs[curKeyLen].focus();
+
+                DemoView.closeHint();
             },
             inputDigitBackward: function (inputObj) {
                 var curIndex = $(inputObj).data('index');
-                //console.log('current input: ' + curIndex);
                 if(curIndex == 0) return;
                 DemoView.digitInputs[curIndex - 1].focus();
+
                 DemoView.closeHint();
             },
             prepareDigitInputs: function (keyLength) {
