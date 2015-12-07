@@ -45,17 +45,14 @@
 
         var DemoFakeData = {
             key: '123456'
-        };
-
-        var DemoConfig = {
+        },
+            DemoConfig = {
             fakedata: true,
             fakedataDelay: 2000,
             digitKeyLength: DemoFakeData.key.length || 4
-        };
-
-        var DemoModel = {};
-
-        var DemoView = {
+        },
+            DemoModel = {},
+            DemoView = {
             digitInputs: [],
             curDigitInput: 0,
             inputState: true, // true: longer, false: shorter
@@ -225,9 +222,8 @@
                     $('#pageLogger')[0].scrollTop = $('#pageLogger')[0].scrollHeight;
                 }
             }
-        };
-
-        var DemoController = {
+        },
+            DemoController = {
             init: function () {
                 DemoView.init();
             },
